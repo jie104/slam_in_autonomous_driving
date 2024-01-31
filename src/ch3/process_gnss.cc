@@ -10,6 +10,8 @@
 #include "common/io_utils.h"
 #include "tools/ui/pangolin_window.h"
 #include "utm_convert.h"
+#include <gflags/gflags.h>
+
 
 DEFINE_string(txt_path, "./data/ch3/10.txt", "数据文件路径");
 

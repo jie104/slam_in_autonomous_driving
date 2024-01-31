@@ -36,7 +36,7 @@ int main(int argc, char** argv) {
 
     while (ui.ShouldQuit() == false) {
         // 更新自身位置
-        Vec3d v_world = pose.so3() * v_body;
+        Vec3d v_world = pose.so3() * v_body;    //初始化时，so3为单位矩阵
         pose.translation() += v_world * dt;
 
         // 更新自身旋转
