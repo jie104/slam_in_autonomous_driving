@@ -11,7 +11,7 @@
 #include "common/io_utils.h"
 #include "tools/ui/pangolin_window.h"
 
-DEFINE_string(imu_txt_path, "/home/zhengxiaojie/my_code/automous_driver/workspace/slam_in_autonomous_driving/data/ch3/10.txt", "数据文件路径");
+DEFINE_string(imu_txt_path, "/home/zhengxiaojie/my_code/slam_in_autonomous_driving/data/ch3/10.txt", "数据文件路径");
 DEFINE_bool(with_ui, true, "是否显示图形界面");
 
 /// 本程序演示如何对IMU进行直接积分
@@ -30,8 +30,8 @@ int main(int argc, char** argv) {
 
     // 该实验中，我们假设零偏已知
     Vec3d gravity(0, 0, -9.8);  // 重力方向
-    Vec3d init_bg(00.000224886, -7.61038e-05, -0.000742259);
-    Vec3d init_ba(-0.165205, 0.0926887, 0.0058049);
+    Vec3d init_bg(00.000224886, -7.61038e-05, -0.000742259);    //角速度零偏
+    Vec3d init_ba(-0.165205, 0.0926887, 0.0058049);     //加速度零偏
 
     sad::IMUIntegration imu_integ(gravity, init_bg, init_ba);
 
@@ -56,7 +56,7 @@ int main(int argc, char** argv) {
         fout << std::endl;
     };
 
-    std::ofstream fout("./data/ch3/state.txt");
+    std::ofstream fout("/home/zhengxiaojie/my_code/slam_in_autonomous_driving/data/ch3/state.txt");
     io.SetIMUProcessFunc([&imu_integ, &save_result, &fout, &ui](const sad::IMU& imu) {
           imu_integ.AddIMU(imu);
           save_result(fout, imu.timestamp_, imu_integ.GetR(), imu_integ.GetV(), imu_integ.GetP());
