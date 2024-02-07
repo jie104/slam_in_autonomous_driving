@@ -16,10 +16,10 @@ if __name__ == '__main__':
 
         # 轨迹
         plt.subplot(121)
-        plt.scatter(path_data[:, 1], path_data[:, 2], s=2)
+        plt.scatter(path_data[:, 1], path_data[:, 2], s=2)  #[:,1]表示取所有行的第2个数据
         plt.xlabel('X')
         plt.ylabel('Y')
-        plt.grid()
+        plt.grid()  #栅格化
         plt.title('2D trajectory')
 
         # 姿态
