@@ -13,7 +13,7 @@
 #include <gflags/gflags.h>
 
 
-DEFINE_string(txt_path, "./data/ch3/10.txt", "数据文件路径");
+DEFINE_string(txt_path, "/home/zhengxiaojie/my_code/slam_in_autonomous_driving/data/ch3/10.txt", "数据文件路径");
 
 // 以下参数仅针对本书提供的数据
 DEFINE_double(antenna_angle, 12.06, "RTK天线安装偏角（角度）");
@@ -41,7 +41,7 @@ int main(int argc, char** argv) {
 
     sad::TxtIO io(fLS::FLAGS_txt_path);
 
-    std::ofstream fout("./data/ch3/gnss_output.txt");
+    std::ofstream fout("/home/zhengxiaojie/my_code/slam_in_autonomous_driving/data/ch3/gnss_output.txt");
     Vec2d antenna_pos(FLAGS_antenna_pox_x, FLAGS_antenna_pox_y);
 
     auto save_result = [](std::ofstream& fout, double timestamp, const SE3& pose) {
@@ -70,9 +70,8 @@ int main(int argc, char** argv) {
               if (!first_gnss_set) {
                   origin = gnss_out.utm_pose_.translation();
                   first_gnss_set = true;
-              }
-
-              /// 减掉一个原点
+              }     
+                            /// 减掉一个原点
               gnss_out.utm_pose_.translation() -= origin;
 
               save_result(fout, gnss_out.unix_time_, gnss_out.utm_pose_);

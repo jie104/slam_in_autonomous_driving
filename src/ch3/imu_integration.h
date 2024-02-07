@@ -34,7 +34,7 @@ class IMUIntegration {
     }
 
     /// 组成NavState
-    NavStated GetNavState() const { return NavStated(timestamp_, R_, p_, v_, bg_, ba_); }
+    NavStated  GetNavState() const { return NavStated(timestamp_, R_, p_, v_, bg_, ba_); }
 
     SO3 GetR() const { return R_; }
     Vec3d GetV() const { return v_; }
