@@ -80,7 +80,7 @@ bool KdTree::GetClosestPoint(const PointType &pt, std::vector<int> &closest_idx,
     closest_idx.resize(knn_result.size());
     for (int i = closest_idx.size() - 1; i >= 0; --i) {
         // 倒序插入
-        closest_idx[i] = knn_result.top().node_->point_idx_;
+        closest_idx[i] = knn_result.top().node_->point_idx_;    ///从小到大
         knn_result.pop();
     }
     return true;
@@ -183,6 +183,19 @@ bool KdTree::FindSplitAxisAndThresh(const IndexVec &point_idx, int &axis, float 
     var.maxCoeff(&max_i, &max_j);
     axis = max_i;
     th = mean[axis];
+
+    if(var.squaredNorm() < 1e-7){
+        ///边界情况：输入的points等同于一个值，前一半分至右侧，后一半分至左侧
+        ///真实数据基本不会出现，但人工数据可能把若干个点设置成一样
+        for(int i=0;i<point_idx.size();++i){
+            if(i<point_idx.size()/2){
+                left.emplace_back(point_idx[i]);
+            }else{
+                right.emplace_back(point_idx[i]);
+            }
+        }
+        return true;
+    }
 
     for (const auto &idx : point_idx) {
         if (cloud_[idx][axis] < th) {
