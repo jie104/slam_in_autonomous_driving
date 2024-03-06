@@ -17,21 +17,27 @@
 
 namespace sad {
 
+///曲线模型的顶点，模板参数：优化变量维度和数据类型
 class VertexSE2 : public g2o::BaseVertex<3, SE2> {
    public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
+    ///重置
     void setToOriginImpl() override { _estimate = SE2(); }
+
+    ///更新
     void oplusImpl(const double* update) override {
         _estimate.translation()[0] += update[0];
         _estimate.translation()[1] += update[1];
         _estimate.so2() = _estimate.so2() * SO2::exp(update[2]);
     }
 
+    ///存盘和读盘
     bool read(std::istream& is) override { return true; }
     bool write(std::ostream& os) const override { return true; }
 };
 
+///误差模型 模板参数：观测值维度，类型，连接顶点类型
 class EdgeSE2LikelihoodFiled : public g2o::BaseUnaryEdge<1, double, VertexSE2> {
    public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
@@ -53,6 +59,7 @@ class EdgeSE2LikelihoodFiled : public g2o::BaseUnaryEdge<1, double, VertexSE2> {
         }
     }
 
+    ///计算曲线模型误差
     void computeError() override {
         VertexSE2* v = (VertexSE2*)_vertices[0];
         SE2 pose = v->estimate();
@@ -69,6 +76,7 @@ class EdgeSE2LikelihoodFiled : public g2o::BaseUnaryEdge<1, double, VertexSE2> {
         }
     }
 
+    ///计算雅可比矩阵
     void linearizeOplus() override {
         VertexSE2* v = (VertexSE2*)_vertices[0];
         SE2 pose = v->estimate();

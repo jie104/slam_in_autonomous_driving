@@ -92,7 +92,7 @@ bool LikelihoodField::AlignGaussNewton(SE2& init_pose) {
             if (pf[0] >= image_boarder && pf[0] < field_.cols - image_boarder && pf[1] >= image_boarder &&
                 pf[1] < field_.rows - image_boarder) {
                 effective_num++;
-
+                ///todo
                 // 图像梯度
                 float dx = 0.5 * (field_.at<float>(pf[1], pf[0] + 1) - field_.at<float>(pf[1], pf[0] - 1));
                 float dy = 0.5 * (field_.at<float>(pf[1] + 1, pf[0]) - field_.at<float>(pf[1] - 1, pf[0]));
@@ -150,13 +150,18 @@ cv::Mat LikelihoodField::GetFieldImage() {
 }
 
 bool LikelihoodField::AlignG2O(SE2& init_pose) {
+///构建图优化，先设定g2o
+    ///每个误差项变量维度为3，误差值维度为1
     using BlockSolverType = g2o::BlockSolver<g2o::BlockSolverTraits<3, 1>>;
+    ///线性求解器类型
     using LinearSolverType = g2o::LinearSolverCholmod<BlockSolverType::PoseMatrixType>;
+    ///利用列文伯格-马尔夸克方法
     auto* solver = new g2o::OptimizationAlgorithmLevenberg(
         g2o::make_unique<BlockSolverType>(g2o::make_unique<LinearSolverType>()));
-    g2o::SparseOptimizer optimizer;
-    optimizer.setAlgorithm(solver);
+    g2o::SparseOptimizer optimizer;     ///图模型
+    optimizer.setAlgorithm(solver);     ///设置求解器
 
+    ///往图中增加顶点
     auto* v = new VertexSE2();
     v->setId(0);
     v->setEstimate(init_pose);
@@ -183,7 +188,7 @@ bool LikelihoodField::AlignG2O(SE2& init_pose) {
         }
 
         auto e = new EdgeSE2LikelihoodFiled(field_, r, angle, resolution_);
-        e->setVertex(0, v);
+        e->setVertex(0, v);     ///设置连接的顶点
 
         if (e->IsOutSide()) {
             has_outside_pts_ = true;
@@ -191,17 +196,20 @@ bool LikelihoodField::AlignG2O(SE2& init_pose) {
             continue;
         }
 
+        ///信息矩阵：
         e->setInformation(Eigen::Matrix<double, 1, 1>::Identity());
-        auto rk = new g2o::RobustKernelHuber;
+        auto rk = new g2o::RobustKernelHuber;   ///鲁棒核函数
         rk->setDelta(rk_delta);
         e->setRobustKernel(rk);
         optimizer.addEdge(e);
     }
 
-    optimizer.setVerbose(false);
+    ///执行优化
+    optimizer.setVerbose(false);    ///关闭调试输出
     optimizer.initializeOptimization();
     optimizer.optimize(10);
 
+    ///输出优化值
     init_pose = v->estimate();
     return true;
 }
