@@ -10,7 +10,7 @@
 #include <execution>
 
 namespace sad {
-
+///栅格模板(1000/2/20=25m，不大于25m)和子地图大小是按照20m的激光量程设定，若使用更远的激光，应该扩大这些参数
 OccupancyMap::OccupancyMap() {
     BuildModel();
     occupancy_grid_ = cv::Mat(image_size_, image_size_, CV_8U, 127);
@@ -22,7 +22,7 @@ void OccupancyMap::BuildModel() {
             Model2DPoint pt;
             pt.dx_ = x;
             pt.dy_ = y;
-            pt.range_ = sqrt(x * x + y * y) * inv_resolution_;
+            pt.range_ = sqrt(x * x + y * y) * inv_resolution_;  ///表示实际距离，如此合理
             pt.angle_ = std::atan2(y, x);
             pt.angle_ = pt.angle_ > M_PI ? pt.angle_ - 2 * M_PI : pt.angle_;  // limit in 2pi
             model_.push_back(pt);
@@ -78,7 +78,8 @@ void OccupancyMap::AddLidarFrame(std::shared_ptr<Frame> frame, GridMethod method
     
     // 此处不能直接使用frame->pose_submap_，因为frame可能来自上一个地图
     // 此时frame->pose_submap_还未更新，依旧是frame在上一个地图中的pose
-    SE2 pose_in_submap = pose_.inverse() * frame->pose_;
+    ///2、总是将当前扫描数据与当前子地图匹配，得到该扫描数据在当前子图中的位姿
+    SE2 pose_in_submap = pose_.inverse() * frame->pose_;    ///T_w_c表示激光在世界坐标系下的位姿，T_w_s表示子地图在世界坐标系下的位姿,pose_in_submap表示激光在子地图下的位姿
     float theta = pose_in_submap.so2().log();
     has_outside_pts_ = false;
 
@@ -109,12 +110,12 @@ void OccupancyMap::AddLidarFrame(std::shared_ptr<Frame> frame, GridMethod method
                 return;
             }
 
-            double angle = pt.angle_ - theta;  // 激光系下角度
-            double range = FindRangeInAngle(angle, scan);
+            double angle = pt.angle_ - theta;  /// 激光系下角度 减theta，将模板点在子地图下角度转到激光系下
+            double range = FindRangeInAngle(angle, scan);   ///可利用角分线定理进行插值
 
             if (range < scan->range_min || range > scan->range_max) {
                 /// 某方向无测量值时，认为无效
-                /// 但离机器比较近时，涂白
+                /// 考虑到机器有一定体积，故离机器比较近时，涂白
                 if (pt.range_ < endpoint_close_th_) {
                     SetPoint(pw, false);
                 }
@@ -146,15 +147,15 @@ void OccupancyMap::SetPoint(const Vec2i& pt, bool occupy) {
         return;
     }
 
-    /// 这里设置了一个上下限
-    uchar value = occupancy_grid_.at<uchar>(y, x);
+    /// 这里设置了一个上下限117~137
+    uchar value = occupancy_grid_.at<uchar>(y, x);  ///初始化时，value是127
     if (occupy) {
-        if (value > 117) {
-            occupancy_grid_.ptr<uchar>(y)[x] -= 1;
+        if (value > 107) {
+            occupancy_grid_.ptr<uchar>(y)[x] -= 1;  ///障碍物 -1
         }
     } else {
         if (value < 137) {
-            occupancy_grid_.ptr<uchar>(y)[x] += 1;
+            occupancy_grid_.ptr<uchar>(y)[x] += 1;  ///非障碍物 +1
         }
     }
 }
