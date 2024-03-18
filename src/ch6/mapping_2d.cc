@@ -35,25 +35,29 @@ bool Mapping2D::ProcessScan(Scan2d::Ptr scan) {
     if (last_frame_) {
         // set pose from last frame
         // current_frame_->pose_ = last_frame_->pose_;
-        current_frame_->pose_ = last_frame_->pose_ * motion_guess_;
+        current_frame_->pose_ = last_frame_->pose_ * motion_guess_;    //todo:第一帧位姿怎么是世界坐标系下位姿？？？
         current_frame_->pose_submap_ = last_frame_->pose_submap_;
     }
 
     // 利用scan matching来匹配地图
     if (!first_scan_) {
         // 第一帧无法匹配，直接加入到occupancy map
-        current_submap_->MatchScan(current_frame_);
+        ///关键在于似然场是在子地图坐标系下生成的，故激光点云应该转到子地图坐标系下匹配，因此考虑取当前帧子地图坐标系为上一帧子地图坐标系
+        current_submap_->MatchScan(current_frame_); ///todo:是否存在似然场与当前帧的位姿偏差过大，导致匹配不准？？？不会，因为每一帧都是转到子地图坐标系下进行匹配的，此时会很接近
     }
 
     // current_submap_->AddScanInOccupancyMap(current_frame_);
     first_scan_ = false;
+
+    ///3、机器人如果发生位移或移动，就按一定距离和角度来取关键帧
     bool is_kf = IsKeyFrame();
 
     if (is_kf) {
         AddKeyFrame();
+        ///1、一个子地图对应一个似然场和一个栅格地图
         current_submap_->AddScanInOccupancyMap(current_frame_);
 
-        // 处理回环检测
+        /// 处理回环检测,使用关键帧做回环
         if (loop_closing_) {
             loop_closing_->AddNewFrame(current_frame_);
         }
@@ -87,7 +91,7 @@ bool Mapping2D::ProcessScan(Scan2d::Ptr scan) {
     cv::waitKey(10);
 
     if (last_frame_) {
-        motion_guess_ = last_frame_->pose_.inverse() * current_frame_->pose_;
+        motion_guess_ = last_frame_->pose_.inverse() * current_frame_->pose_;   ///T_w_c-1*T_w_c1
     }
 
     last_frame_ = current_frame_;
@@ -128,11 +132,13 @@ void Mapping2D::ExpandSubmap() {
     cv::imwrite("./data/ch6/submap_" + std::to_string(last_submap->GetId()) + ".png",
                 last_submap->GetOccuMap().GetOccupancyGridBlackWhite());
 
+    ///4、新的子图以当前帧为中心，其位姿取T_w_s=T_w_c
     current_submap_ = std::make_shared<Submap>(current_frame_->pose_);
     current_frame_->pose_submap_ = SE2();  // 这个归零
 
     current_submap_->SetId(++submap_id_);
     current_submap_->AddKeyFrame(current_frame_);
+    ///4、为方便配准，将旧的子图中最近的一些关键帧拷贝到新的子地图
     current_submap_->SetOccuFromOtherSubmap(last_submap);  // 把上一帧的数据也放进来，不让一个submap显得太空
 
     current_submap_->AddScanInOccupancyMap(current_frame_);
@@ -210,7 +216,8 @@ cv::Mat Mapping2D::ShowGlobalMap(int max_size) {
 
     std::for_each(std::execution::par_unseq, render_data.begin(), render_data.end(), [&](const Vec2i& xy) {
         int x = xy[0], y = xy[1];
-        Vec2f pw = (Vec2f(x, y) - center_image) / global_map_resolution + c;  // 世界坐标
+      /// 世界坐标,Vec2f(x,y)=global_map_resolution*(pw-c)+center_image,本质上是想以c为坐标原点做图像坐标变换
+        Vec2f pw = (Vec2f(x, y) - center_image) / global_map_resolution + c;
 
         for (auto& m : all_submaps_) {
             Vec2f ps = m->GetPose().inverse().cast<float>() * pw;  // in submap

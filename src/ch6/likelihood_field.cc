@@ -46,6 +46,7 @@ void LikelihoodField::SetTargetScan(Scan2d::Ptr scan) {
 }
 
 void LikelihoodField::BuildModel() {
+    ///此处取20m,与激光探测距离相关
     const int range = 20;  // 生成多少个像素的模板
     for (int x = -range; x <= range; ++x) {
         for (int y = -range; y <= range; ++y) {
@@ -207,7 +208,7 @@ bool LikelihoodField::AlignG2O(SE2& init_pose) {
     ///执行优化
     optimizer.setVerbose(false);    ///关闭调试输出
     optimizer.initializeOptimization();
-    optimizer.optimize(10);
+    optimizer.optimize(10); ///设置迭代次数10
 
     ///输出优化值
     init_pose = v->estimate();

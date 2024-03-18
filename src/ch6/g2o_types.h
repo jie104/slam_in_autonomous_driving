@@ -37,7 +37,7 @@ class VertexSE2 : public g2o::BaseVertex<3, SE2> {
     bool write(std::ostream& os) const override { return true; }
 };
 
-///误差模型 模板参数：观测值维度，类型，连接顶点类型
+///误差模型 模板参数：误差值维度，类型，连接顶点类型
 class EdgeSE2LikelihoodFiled : public g2o::BaseUnaryEdge<1, double, VertexSE2> {
    public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
@@ -64,7 +64,7 @@ class EdgeSE2LikelihoodFiled : public g2o::BaseUnaryEdge<1, double, VertexSE2> {
         VertexSE2* v = (VertexSE2*)_vertices[0];
         SE2 pose = v->estimate();
         Vec2d pw = pose * Vec2d(range_ * std::cos(angle_), range_ * std::sin(angle_));
-        Vec2d pf =
+        Vec2d pf =  ///todo：减（0.5，0.5）与后面双线性差值相关?
             pw * resolution_ + Vec2d(field_image_.rows / 2, field_image_.cols / 2) - Vec2d(0.5, 0.5);  // 图像坐标
 
         if (pf[0] >= image_boarder_ && pf[0] < field_image_.cols - image_boarder_ && pf[1] >= image_boarder_ &&

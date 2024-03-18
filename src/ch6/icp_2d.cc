@@ -34,8 +34,7 @@ bool Icp2d::AlignGaussNewton(SE2& init_pose) {
 
             float angle = source_scan_->angle_min + i * source_scan_->angle_increment;
             float theta = current_pose.so2().log();
-            ///此处是将点云从车体中心变换到世界坐标系，而不是将点云旋转，平移？？？
-            Vec2d pw = current_pose * Vec2d(r * std::cos(angle), r * std::sin(angle));
+            Vec2d pw = current_pose * Vec2d(r * std::cos(angle), r * std::sin(angle));///todo:相应的target_point也是世界坐标系下？？？从代码来看，其似乎明显是激光坐标系下
 
             ////对比通常的坐标变换
             Vec2d translate=current_pose.translation();

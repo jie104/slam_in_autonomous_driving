@@ -82,6 +82,7 @@ bool LoopClosing::DetectLoopCandidates() {
     return !current_candidates_.empty();
 }
 
+///基于子地图的回环修正
 void LoopClosing::MatchInHistorySubmaps() {
     // 我们先把要检查的scan, pose和submap存到离线文件, 把mr match调完了再实际上线
     // current_frame_->Dump("./data/ch6/frame_" + std::to_string(current_frame_->id_) + ".txt");
@@ -131,7 +132,7 @@ void LoopClosing::Optimize() {
         g2o::make_unique<BlockSolverType>(g2o::make_unique<LinearSolverType>()));
     g2o::SparseOptimizer optimizer;
     optimizer.setAlgorithm(solver);
-
+    ///回环优化中，以每个子图位姿为优化变量
     for (auto& sp : submaps_) {
         auto* v = new VertexSE2();
         v->setId(sp.first);
@@ -139,7 +140,7 @@ void LoopClosing::Optimize() {
         optimizer.addVertex(v);
     }
 
-    /// 连续约束
+    /// 相邻约束
     for (int i = 0; i < last_submap_id_; ++i) {
         auto first_submap = submaps_[i];
         auto next_submap = submaps_[i + 1];
@@ -191,7 +192,7 @@ void LoopClosing::Optimize() {
             loop_constraints_.at(ep.first).valid_ = true;
             inliers++;
         } else {
-            ep.second->setLevel(1);
+            ep.second->setLevel(1); ///level=1表示下次不再对该边进行优化,g2o只处理level=0的边
             LOG(INFO) << "loop from " << ep.first.first << " to " << ep.first.second
                       << " is invalid, chi2: " << ep.second->chi2();
             loop_constraints_.at(ep.first).valid_ = false;

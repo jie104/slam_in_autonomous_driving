@@ -60,6 +60,7 @@ bool MRLikelihoodField::AlignG2O(SE2& init_pose) {
     num_inliers_.clear();
     inlier_ratio_.clear();
 
+    ///金字塔法
     for (int l = 0; l < levels_; ++l) {
         if (!AlignInLevel(l, init_pose)) {
             return false;
@@ -150,7 +151,7 @@ bool MRLikelihoodField::AlignInLevel(int level, SE2& init_pose) {
     optimizer.initializeOptimization();
     optimizer.optimize(10);
 
-    /// 计算edges中有多少inlier
+    /// 计算edges中有多少inlier,chi2=error*\Omega*error， 是基于卡方检验计算出的阈值，, 如果这个数很大，说明此边的值与其他边很不相符
     int num_inliers =
         std::accumulate(edges.begin(), edges.end(), 0, [&rk_delta, level](int num, EdgeSE2LikelihoodFiled* e) {
             if (e->level() == 0 && e->chi2() < rk_delta[level]) {
@@ -173,7 +174,7 @@ bool MRLikelihoodField::AlignInLevel(int level, SE2& init_pose) {
 
     num_inliers_.emplace_back(num_inliers);
     inlier_ratio_.emplace_back(inlier_ratio);
-
+    ///在多分辨率配准中，只要匹配数超过所有扫描数据的一定比例比例（40%），就认为地图被匹配上
     if (num_inliers > 100 && inlier_ratio > inlier_ratio_th) {
         init_pose = v->estimate();
         return true;
