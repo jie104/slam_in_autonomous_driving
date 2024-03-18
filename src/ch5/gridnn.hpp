@@ -24,7 +24,7 @@ class GridNN {
    public:
     using KeyType = Eigen::Matrix<int, dim, 1>;
     using PtType = Eigen::Matrix<float, dim, 1>;
-
+    ///限定作用域中，枚举成员的名字遵循常规的作用域准则，并且在枚举类型的作用域外是不可访问
     enum class NearbyType {
         CENTER,  // 只考虑中心
         // for 2D
@@ -81,6 +81,8 @@ class GridNN {
     CloudPtr cloud_;
 
     std::vector<KeyType> nearby_grids_;  // 附近的栅格
+
+
 };
 
 // 实现

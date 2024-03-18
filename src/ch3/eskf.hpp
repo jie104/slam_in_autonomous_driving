@@ -142,7 +142,7 @@ class ESKF {
         double eg2 = eg;  // * eg;
         double ea2 = ea;  // * ea;
 
-        // 设置过程噪声
+        // 设置过程噪声,对角线
         Q_.diagonal() << 0, 0, 0, ev2, ev2, ev2, et2, et2, et2, eg2, eg2, eg2, ea2, ea2, ea2, 0, 0, 0;
 
         // 设置里程计噪声

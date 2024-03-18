@@ -185,7 +185,7 @@ void OctoTree::Reset() {
 
 void OctoTree::Knn(const Vec3f &pt, OctoTreeNode *node, std::priority_queue<NodeAndDistanceOcto> &knn_result) const {
     if (node->IsLeaf()) {
-        if (node->point_idx_ != -1) {
+        if (node->point_idx_ != -1) {   ///为-1时，节点是空的
             // 如果是叶子，看该点是否为最近邻
             ComputeDisForLeaf(pt, node, knn_result);
             return;

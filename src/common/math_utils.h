@@ -38,7 +38,7 @@ void ComputeMeanAndCovDiag(const C& data, D& mean, D& cov_diag, Getter&& getter)
     // clang-format off
     mean = std::accumulate(data.begin(), data.end(), D::Zero().eval(),
                            [&getter](const D& sum, const auto& data) -> D { return sum + getter(data); }) / len;
-    cov_diag = std::accumulate(data.begin(), data.end(), D::Zero().eval(),
+    cov_diag = std::accumulate(data.begin(), data.end(), D::Zero().eval(),  //eval()函数防止混淆，因为Matrix元素复值有先后顺序，若赋值元素有重合会导致混淆
                                [&mean, &getter](const D& sum, const auto& data) -> D {
                                    return sum + (getter(data) - mean).cwiseAbs2().eval();
                                }) / (len - 1);
@@ -114,7 +114,7 @@ bool FitPlane(std::vector<Eigen::Matrix<S, 3, 1>>& data, Eigen::Matrix<S, 4, 1>&
         return false;
     }
 
-    Eigen::MatrixXd A(data.size(), 4);
+    Eigen::MatrixXd A(data.size(), 4);  ///初始化data.size()x4的矩阵
     for (int i = 0; i < data.size(); ++i) {
         A.row(i).head<3>() = data[i].transpose();
         A.row(i)[3] = 1.0;
@@ -122,7 +122,6 @@ bool FitPlane(std::vector<Eigen::Matrix<S, 3, 1>>& data, Eigen::Matrix<S, 4, 1>&
 
     Eigen::JacobiSVD svd(A, Eigen::ComputeThinV);
     plane_coeffs = svd.matrixV().col(3);
-
     // check error eps
     for (int i = 0; i < data.size(); ++i) {
         double err = plane_coeffs.template head<3>().dot(data[i]) + plane_coeffs[3];
